@@ -8,32 +8,41 @@ import nltk
 import umap
 from plotly.subplots import make_subplots
 import plotly.graph_objects as go
+from cleantext import clean
+
 print("Starting the process...")
-#part 1 - read the text file and split it into sentences, then store the sentences in a list
-text_list = []
-things_to_remove = ['\u2006', '\u2009', '\u202f', '\xa0', '\ufeff', '\n', '\r', '\t']
 
 with open('MyText.txt', 'r', encoding='utf-8') as file:
-    text = file.read()
+    raw_text = file.read()
 
-for chars in things_to_remove:
-    text = text.replace(chars, ' ')
+cleaned_text = clean(raw_text,
+    fix_unicode=True,
+    to_ascii=True,
+    lower=False,
+    no_urls=True,
+    no_emails=True,
+    no_numbers=False,
+    lang='en',
+)
 
-sentences = nltk.sent_tokenize(text)
-
-for sentence in sentences:
-    sentence = re.sub(r'^\s*\d+', '', sentence)
-    sentence = re.sub(r'(?<=\s)\d+(?=[A-Za-z“"\'])', '', sentence)
-    sentence = re.sub(r'\d+(?=[A-Za-z])', '', sentence)
-    sentence = sentence.strip()
-    text_list.append(sentence)
+cleaned_text = cleaned_text.replace("\\'", "'").replace('\\"', '"')
+cleaned_text = cleaned_text.replace("\\n", " ").replace("\\t", " ")
+cleaned_text = re.sub(r'\s+', ' ', cleaned_text).strip()
 
 
-print("done reading and cleaning text. Number of sentences:", len(text_list))
+
+
+sentences = nltk.sent_tokenize(cleaned_text)
+
+print(sentences)
+
+
+
+print("done reading and cleaning text. Number of sentences:", len(sentences))
 
 #part 2 - use the sentence transformer model to convert the sentences into embeddings, then store the embeddings in a list
 model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
-embeddings = model.encode(text_list)
+embeddings = model.encode(sentences, show_progress_bar=True)
 
 print("Embeddings generated.")
 
@@ -47,12 +56,10 @@ umap_reduce = umap.UMAP(n_components=5)
 umap_reduced_embeddings = umap_reduce.fit_transform(embeddings)
 
 
-print("Reduced embeddings generated.")
-
 
 #part 4 - create a dataframe to store the sentences as x y z cordinates
 df_pca = pd.DataFrame(pca_reduced_embeddings, columns=['dim1', 'dim2', 'dim3', 'dim4', 'dim5'])
-df_pca['sentences'] = text_list
+df_pca['sentences'] = sentences
 df_pca['dim1'] *= 100
 df_pca['dim2'] *= 100
 df_pca['dim3'] *= 100
@@ -63,7 +70,7 @@ print("PCA Dataframe created.")
 
 
 df_umap = pd.DataFrame(umap_reduced_embeddings, columns=['dim1', 'dim2', 'dim3', 'dim4', 'dim5'])
-df_umap['sentences'] = text_list
+df_umap['sentences'] = sentences
 df_umap['dim5'] = df_umap['dim5'].abs()
 
 print("UMAP Dataframe created.")

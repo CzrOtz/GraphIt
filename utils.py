@@ -41,7 +41,7 @@ def pca_reduce(embeddings, dimensions):
     return reduced_embeddings
 
 def umap_reduce(embeddings, dimensions, neighbors):
-    umap_reduce = umap.UMAP(n_components=dimensions, n_neighbors=neighbors)
+    umap_reduce = umap.UMAP(n_components=dimensions, n_neighbors=neighbors, metric='cosine', random_state=42, min_dist=0.1)
     umap_reduced_embeddings = umap_reduce.fit_transform(embeddings)
     return umap_reduced_embeddings
 

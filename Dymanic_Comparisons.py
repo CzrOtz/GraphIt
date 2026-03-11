@@ -4,13 +4,15 @@ import utils
 import pandas as pd
 import numpy as np
 
-user_directories = ['text1.txt', 'text2.txt', 'text3.txt','control.txt']
+
+essays = ['Human2.txt', 'AI2.txt']
+
 embeddings_list = []
 all_sentences = []
 all_sources = []
 dimensions = 3
 neighbors = 15
-multiplier = 1
+multiplier = 15
 x_cordinate = 'dim1'
 y_cordinate = 'dim2'
 z_cordinate = 'dim3'
@@ -18,7 +20,7 @@ color_cordinate = lambda x: 'dim4' if x == 4 else 'source'
 
 
 
-for files in user_directories:
+for files in essays:
     text = utils.open_and_clean_text(files)
     sentence = nltk.sent_tokenize(text)
     embeddings = utils.embed(sentence)
@@ -34,7 +36,26 @@ if dimensions == 3:
 elif dimensions == 4:   
     df_pacmap_combined = utils.create_4d_dataframe(pacmap_reduced_embeddings, all_sentences, multiplier, all_sources)
 
+#extract the point in the x cordinate that has the highest value
+x_positive_axis_extrema = df_pacmap_combined[[x_cordinate, 'sentences', 'source']].loc[df_pacmap_combined[x_cordinate].idxmax()]
+x_negative_axis_extrema = df_pacmap_combined[[x_cordinate, 'sentences', 'source']].loc[df_pacmap_combined[x_cordinate].idxmin()]
+y_positive_axis_extrema = df_pacmap_combined[[y_cordinate, 'sentences', 'source']].loc[df_pacmap_combined[y_cordinate].idxmax()]
+y_negative_axis_extrema = df_pacmap_combined[[y_cordinate, 'sentences', 'source']].loc[df_pacmap_combined[y_cordinate].idxmin()]
+z_positive_axis_extrema = df_pacmap_combined[[z_cordinate, 'sentences', 'source']].loc[df_pacmap_combined[z_cordinate].idxmax()]
+z_negative_axis_extrema = df_pacmap_combined[[z_cordinate, 'sentences', 'source']].loc[df_pacmap_combined[z_cordinate].idxmin()]
 
+#copilot, write a function to print these extrema in a nice format
+def print_extrema(extrema, axis):
+    print(f"{axis} Positive Axis Extrema:")
+    print(f"Sentence: {extrema[0]['sentences']}")
+    print(f"Source: {extrema[0]['source']}")
+    print(f"{axis} Negative Axis Extrema:")
+    print(f"Sentence: {extrema[1]['sentences']}")
+    print(f"Source: {extrema[1]['source']}")    
+
+print_extrema([x_positive_axis_extrema, x_negative_axis_extrema], 'X')
+print_extrema([y_positive_axis_extrema, y_negative_axis_extrema], 'Y')
+print_extrema([z_positive_axis_extrema, z_negative_axis_extrema], 'Z')
 
 fig_pacmap = px.scatter_3d(
     df_pacmap_combined,

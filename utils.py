@@ -28,11 +28,29 @@ def open_and_clean_text(file_path):
 
     return cleaned_text
 
+def clean_text(text):
+    cleaned_text = clean(text,
+        fix_unicode=True,
+        to_ascii=True,
+        lower=False,
+        no_urls=True,
+        no_emails=True,
+        no_numbers=False,
+        lang='en',
+    )
+
+    cleaned_text = cleaned_text.replace("\\'", "'").replace('\\"', '"')
+    cleaned_text = cleaned_text.replace("\\n", " ").replace("\\t", " ")
+    cleaned_text = re.sub(r'\s+', ' ', cleaned_text).strip()
+
+    return cleaned_text
+
 
 def embed(tokenized_sentences):
-    if len(tokenized_sentences) <= 5:
-        sys.exit("Error: The number of sentences must be greater than 5 for meaningful dimensionality reduction.")
-    model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
+    if len(tokenized_sentences) < 3:
+        print(tokenized_sentences)
+        sys.exit("Error: The number of sentences must be greater than 2 for meaningful dimensionality reduction.")
+    model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2', device='cuda')
     embeddings = model.encode(tokenized_sentences, show_progress_bar=True)
     return embeddings
 
@@ -52,7 +70,7 @@ def tsne_reduce(embeddings, dimensions):
     return tsne_reduced_embeddings
 
 def pacmap_reduce(embeddings, dimensions, neighbors):
-    reducer = pacmap.PaCMAP(n_components=dimensions, n_neighbors=neighbors, MN_ratio=1.0, FP_ratio=3.0, random_state=42, distance='angular', num_iters=1000, lr=2.0)
+    reducer = pacmap.PaCMAP(n_components=dimensions, n_neighbors=neighbors, MN_ratio=0.5, FP_ratio=2, random_state=42, distance='angular', num_iters=1000, lr=1.0)
     pacmap_reduced_embeddings = reducer.fit_transform(embeddings,init='pca')
     return pacmap_reduced_embeddings
 

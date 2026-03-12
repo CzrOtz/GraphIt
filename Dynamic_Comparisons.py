@@ -44,18 +44,6 @@ y_negative_axis_extrema = df_pacmap_combined[[y_cordinate, 'sentences', 'source'
 z_positive_axis_extrema = df_pacmap_combined[[z_cordinate, 'sentences', 'source']].loc[df_pacmap_combined[z_cordinate].idxmax()]
 z_negative_axis_extrema = df_pacmap_combined[[z_cordinate, 'sentences', 'source']].loc[df_pacmap_combined[z_cordinate].idxmin()]
 
-#copilot, write a function to print these extrema in a nice format
-def print_extrema(extrema, axis):
-    print(f"{axis} Positive Axis Extrema:")
-    print(f"Sentence: {extrema[0]['sentences']}")
-    print(f"Source: {extrema[0]['source']}")
-    print(f"{axis} Negative Axis Extrema:")
-    print(f"Sentence: {extrema[1]['sentences']}")
-    print(f"Source: {extrema[1]['source']}")    
-
-print_extrema([x_positive_axis_extrema, x_negative_axis_extrema], 'X')
-print_extrema([y_positive_axis_extrema, y_negative_axis_extrema], 'Y')
-print_extrema([z_positive_axis_extrema, z_negative_axis_extrema], 'Z')
 
 fig_pacmap = px.scatter_3d(
     df_pacmap_combined,

@@ -67,17 +67,17 @@ model_selection = [
 ]
 
 
-with st.sidebar.expander("Models and Reduction Algorithms"):
-    embedding_model = st.selectbox("Embedding Model", options=model_selection, index=0)
-    embedding_model = models[model_selection.index(embedding_model)]
-    st.write(f"Full model name: {embedding_model}")
+
+embedding_model = st.sidebar.selectbox("Embedding Model", options=model_selection, index=0)
+embedding_model = models[model_selection.index(embedding_model)]
+
     
 
-    reduction_algorithm = st.selectbox(
-        "Select dimensionality reduction algorithm",
-        ['PaCMAP', 'UMAP', 'PCA', 'tSNE'],
-        index=0
-    )
+reduction_algorithm = st.sidebar.selectbox(
+    "Select dimensionality reduction algorithm",
+    ['PaCMAP', 'UMAP', 'PCA', 'tSNE'],
+    index=0
+)
 
 st.sidebar.title("controls")
 
@@ -185,8 +185,20 @@ if reduction_algorithm == 'PCA':
 
 print("reducer:", repr(reducer_settings))
 
-st.write("Current embedding model:", embedding_model)
-st.write("Current reduction algorithm:", reduction_algorithm)
+multilingual_models = [
+    "sentence-transformers/distiluse-base-multilingual-cased-v2",
+    "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2",
+    "sentence-transformers/LaBSE"
+]
+multilingual_indicator = ""
+
+if embedding_model in multilingual_models:
+    multilingual_indicator = "is"
+else:
+    multilingual_indicator = "is not"
+
+st.markdown(f"Current model: **{embedding_model}**. This model **{multilingual_indicator}** multilingual.")
+st.markdown(f"Current reduction algorithm: **{reduction_algorithm}**")
 
 #conditionals for the plot
 
@@ -257,11 +269,37 @@ st.divider()
 
 # text boxes end #######################
 
+
+
 def process_and_plot(reduction_algorithm):
     if st.button("Process Texts") and len(text_data) > 0:
         with st.spinner("Processing texts..."):
 
             data_frame = dc.produce_dataframe(text_data, labels, reduction_algorithm, reducer_settings, embedding_model)
+
+            
+            metrics = dc.metrics(data_frame)
+
+            with st.expander("Metrics"):
+                st.write("**Description:**")
+                st.write(metrics['description'])
+                st.write("**Missing Values:**")
+                st.write(metrics['missing_values'])
+                st.write("**Unique Sources:**")
+                st.write(metrics['unique_sources'])
+                st.write("**Unique Sentences:**")
+                st.write(metrics['unique_sentences'])
+                st.write("**Sentence Counts per Source:**")
+                st.write(metrics['sentence_counts_per_source'])
+                st.write("**Centroid per Source:**")
+                st.write(metrics['centroid_per_source'])
+                st.write("**Standard Deviation per Source:**")
+                st.write(metrics['std_per_source'])
+                st.write("**Total Sentences:**")
+                st.write(metrics['total_sentences'])
+                st.write("**Source List:**")
+                st.write(metrics['source_list'])
+                
 
             if reducer_settings['n_components']  == 6:
                 

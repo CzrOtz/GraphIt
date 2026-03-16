@@ -47,7 +47,23 @@ def produce_dataframe(text_passages: list, sources: list, reducer: str, settings
 
     return df_combined
 
+def metrics(data_frame: pd.DataFrame) -> pd.DataFrame:
+    
+    copy_df = data_frame.copy()
 
+    metrics = {
+        "description": copy_df.describe(),
+        "missing_values": copy_df.isnull().sum(),
+        "unique_sources": copy_df['source'].nunique(),
+        "unique_sentences": copy_df['sentences'].nunique(),
+        "sentence_counts_per_source": copy_df.groupby('source')['sentences'].count(),
+        "centroid_per_source": copy_df.groupby('source').mean(numeric_only=True),
+        "std_per_source": copy_df.groupby('source').std(numeric_only=True),
+        "total_sentences": len(copy_df),
+        "source_list": copy_df['source'].unique(),
+    }
+
+    return metrics
 
 
 def scatter_plot(data_frame: pd.DataFrame, x_cordinate: str, y_cordinate: str, z_cordinate: str, dimensions: int, color_scale: str, reducer: str, embedding_model_name: str) -> px.scatter_3d:

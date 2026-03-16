@@ -50,7 +50,7 @@ def produce_dataframe(text_passages: list, sources: list, reducer: str, settings
 
 
 
-def scatter_plot(data_frame: pd.DataFrame, x_cordinate: str, y_cordinate: str, z_cordinate: str, dimensions: int, color_scale: str) -> px.scatter_3d:
+def scatter_plot(data_frame: pd.DataFrame, x_cordinate: str, y_cordinate: str, z_cordinate: str, dimensions: int, color_scale: str, reducer: str, embedding_model_name: str) -> px.scatter_3d:
 
     if dimensions == 5:
         color_cordinate = "dim4" 
@@ -70,7 +70,7 @@ def scatter_plot(data_frame: pd.DataFrame, x_cordinate: str, y_cordinate: str, z
         symbol = 'source',
         size=size_cordinate,
         hover_data=['sentences', 'source'],
-        title='PaCMAP 3D Scatter Plot',
+        title=f'3D Scatter Plot - Reducer: {reducer} | Embedding Model: {embedding_model_name}',
         height=800,
         width=1200
     )
@@ -97,10 +97,9 @@ def scatter_plot(data_frame: pd.DataFrame, x_cordinate: str, y_cordinate: str, z
             )
         )   
 
-
     return fig_pacmap
 
-def line_plot(data_frame: pd.DataFrame, x_cordinate: str, y_cordinate: str, z_cordinate: str, dimensions: int) -> px.scatter_3d:
+def line_plot(data_frame: pd.DataFrame, x_cordinate: str, y_cordinate: str, z_cordinate: str, dimensions: int, reducer: str, embedding_model_name: str) -> px.scatter_3d:
     if dimensions == 4: color_cordinate = "dim4"
     if dimensions == 3: color_cordinate = "source"
 
@@ -112,7 +111,7 @@ def line_plot(data_frame: pd.DataFrame, x_cordinate: str, y_cordinate: str, z_co
         color = color_cordinate,
         symbol = 'source',
         hover_data=['sentences', 'source'],
-        title='PaCMAP 3D Line Plot',
+        title=f'3D Line Plot - Reducer: {reducer} | Embedding Model: {embedding_model_name}',
         height=800,
         width=1200
     )
@@ -139,10 +138,9 @@ def line_plot(data_frame: pd.DataFrame, x_cordinate: str, y_cordinate: str, z_co
             )
         )   
 
-
     return fig_pacmap
 
-def scatter_matrix(data_frame: pd.DataFrame, dimensions: int, color_scale: str) -> px.scatter_matrix:
+def scatter_matrix(data_frame: pd.DataFrame, dimensions: int, color_scale: str, reducer: str, embedding_model_name: str) -> px.scatter_matrix:
     if dimensions == 4: color_cordinate = "dim4"
     if dimensions == 3: color_cordinate = "source"
 
@@ -152,33 +150,32 @@ def scatter_matrix(data_frame: pd.DataFrame, dimensions: int, color_scale: str) 
     color=color_cordinate,
     color_continuous_scale=color_scale, 
     symbol='source',
-    height=800,
+    title=f'Scatter Matrix - Reducer: {reducer} | Embedding Model: {embedding_model_name}',
+    height=1000,
     width=1200,
     )
 
     fig_matrix.update_layout(
         paper_bgcolor="#161b22",
-        plot_bgcolor="#161b22"
+        plot_bgcolor="#161b22",
+        legend=dict(
+            orientation="v",
+            yanchor="top",
+            y=1.05,
+            xanchor="left",
+            x=1
+        ),
+        margin=dict(t=100, r=100, b=100, l=100)
     )
 
     if dimensions == 4:
         fig_matrix.update_layout(
-            legend=dict(x=0.01, y=0.99, xanchor="left", yanchor="top"),
+            legend=dict(x=1, y=1.1, xanchor="left", yanchor="top"),
             coloraxis_colorbar=dict(x=1.08, y=0.5, len=0.8),
-            margin=dict(r=80)
         )
 
-        fig_matrix.update_layout(
-            paper_bgcolor="#161b22",
-            plot_bgcolor="#161b22",
-            legend=dict(
-                orientation="h",
-                yanchor="bottom",
-                y=1.05,
-                xanchor="left",
-                x=0
-            )
-        )
+
+
     
     return fig_matrix
     
@@ -186,7 +183,9 @@ def scatter_matrix(data_frame: pd.DataFrame, dimensions: int, color_scale: str) 
 
 
 
-def cone_plot(data_frame: pd.DataFrame, color_scale: str, sizem_mode: str, size_ref: float) -> go.Figure:
+def cone_plot(data_frame: pd.DataFrame, color_scale: str, sizem_mode: str, size_ref: float, dimensions: int, reducer: str, embedding_model_name: str) -> go.Figure:
+
+
     fig = go.Figure(data=go.Cone(
         x=data_frame['dim1'],
         y=data_frame['dim2'],
@@ -195,7 +194,8 @@ def cone_plot(data_frame: pd.DataFrame, color_scale: str, sizem_mode: str, size_
         v=data_frame['dim5'],
         w=data_frame['dim6'],
         colorscale=color_scale,
-        showscale=True,
+        showscale= True,
+        colorbar= dict(title="Magnitude"),
         sizemode=sizem_mode,
         sizeref=size_ref,
         customdata=data_frame[['source', 'sentences']].to_numpy(),
@@ -214,6 +214,7 @@ def cone_plot(data_frame: pd.DataFrame, color_scale: str, sizem_mode: str, size_
     fig.update_layout(
         height=1200,
         width=1500,
+        title=f'3D Cone Plot - Reducer: {reducer} | Embedding Model: {embedding_model_name}',
         paper_bgcolor="#161b22",
         scene=dict(
             xaxis_title="dim1",

@@ -6,15 +6,15 @@ import Dynamic_comparisons_2 as dc
 
 st.set_page_config(layout="wide")
 
-st.title("Semantic Analysis Scratchpad")
+st.title("Semantic Similarity Lab")
 
-st.markdown(
-    """This window uses hugging face 384 dimensional embeddings, nklt sentence tokenization, and PaCMAP dimensionality reduction to create a 3D scatter plot of the semantic relationships between sentences in different texts. You can paste your own texts in the boxes below, and adjust the settings in the sidebar to see how it changes the visualization. The goal is to help you visually compare the logic and themes of different texts in a more intuitive way."""
-)
 
 with st.expander("About this tool"):
     st.write(
-        """example"""
+        """This tool allows you to visualize the semantic similarity of texts using various embedding models and dimensionality reduction algorithms. 
+        You can input multiple texts, select an embedding model, and choose a dimensionality reduction technique to see how the texts relate to each other in a reduced-dimensional space. You are able to visualize up to 6 dimensions. 
+        Please note, visualization options will vary based on the number of dimensions you choose. For 3 dimensions, scatter, line, and matrix plots are available. For 4 dimensions, scatter and matrix plots are available. For 5 dimensions, 
+        only scatter plot is available. For 6 dimensions, only cone plot is available. t-SNE is limited to 3 dimensions for visualization purposes using the barnes-hut method, so if you select t-SNE, the dimension count will be set to 3 and the other dimension options will be hidden."""
     )
 
 #SIDE BAR AREA
@@ -42,10 +42,37 @@ models = [
 "intfloat/e5-large-v2"
 ]
 
+model_selection = [
+"all-MiniLM-L6-v2",
+"all-MiniLM-L12-v2",
+"paraphrase-MiniLM-L6-v2",
+"paraphrase-MiniLM-L12-v2",
+"all-mpnet-base-v2",
+"paraphrase-mpnet-base-v2",
+"all-distilroberta-v1",
+"multi-qa-mpnet-base-dot-v1",
+"multi-qa-MiniLM-L6-cos-v1",
+"multi-qa-distilbert-cos-v1",
+"paraphrase-distilroberta-base-v1",
+"paraphrase-albert-small-v2",
+"distiluse-base-multilingual-cased-v2",
+"paraphrase-multilingual-MiniLM-L12-v2",
+"LaBSE",
+"bge-small-en-v1.5",
+"bge-base-en-v1.5",
+"bge-large-en-v1.5",
+"e5-small-v2",
+"e5-base-v2",
+"e5-large-v2"
+]
 
 
 with st.sidebar.expander("Models and Reduction Algorithms"):
-    embedding_model = st.selectbox("Embedding Model", options=models)
+    embedding_model = st.selectbox("Embedding Model", options=model_selection, index=0)
+    embedding_model = models[model_selection.index(embedding_model)]
+    st.write(f"Full model name: {embedding_model}")
+    
+
     reduction_algorithm = st.selectbox(
         "Select dimensionality reduction algorithm",
         ['PaCMAP', 'UMAP', 'PCA', 'tSNE'],
@@ -62,7 +89,7 @@ st.sidebar.title("controls")
 
 
 def pacMap_settings_func() -> dict: 
-    with st.sidebar.expander("pacmac Advanced Settings"):
+    with st.sidebar.expander("PaCMAP Settings"):
         neighbor_count = st.number_input("Neighbor count", min_value=2, value=15)
         dimension_count = st.selectbox("Dimension count/n components", [3, 4, 5, 6], index=0)
         MN_ratio = st.number_input("MN_ratio", value=0.5)
@@ -90,7 +117,7 @@ def pacMap_settings_func() -> dict:
         }
     
 def umap_settings_func() -> dict:
-    with st.sidebar.expander("UMAP Advanced Settings"):
+    with st.sidebar.expander("UMAP Settings"):
         neighbor_count = st.number_input("Neighbor count", min_value=2, value=15)
         dimension_count = st.selectbox("Dimension count/n components", [3, 4, 5, 6], index=0)
         distance = st.selectbox("Distance Metric", ["euclidean", "manhattan", "cosine", "correlation"], index=0)
@@ -108,7 +135,7 @@ def umap_settings_func() -> dict:
         }
     
 def pca_settings_func() -> dict:
-    with st.sidebar.expander("PCA Advanced Settings"):
+    with st.sidebar.expander("PCA Settings"):
         dimension_count = st.selectbox("Dimension count/n components", [3, 4, 5, 6], index=0)
         svd_solver = st.selectbox("SVD Solver", ["auto", "full", "arpack", "randomized"], index=0)
 
@@ -129,7 +156,7 @@ def pca_settings_func() -> dict:
         }
 
 def tsne_settings_func() -> dict:
-    with st.sidebar.expander("t-SNE Advanced Settings"):
+    with st.sidebar.expander("t-SNE Settings"):
         # dimension_count = st.selectbox("Dimension count/n components", [3, 4, 5, 6], index=0)
         st.write("t-SNE only supports 3 dimensions or less for visualization purposes, so the dimension count is set to 3 in this application.")
         perplexity = st.number_input("Perplexity", value=3, min_value=1)
@@ -158,7 +185,8 @@ if reduction_algorithm == 'PCA':
 
 print("reducer:", repr(reducer_settings))
 
-st.write(f"Current reduction algorithm: {reduction_algorithm}")
+st.write("Current embedding model:", embedding_model)
+st.write("Current reduction algorithm:", reduction_algorithm)
 
 #conditionals for the plot
 
@@ -236,39 +264,45 @@ def process_and_plot(reduction_algorithm):
             data_frame = dc.produce_dataframe(text_data, labels, reduction_algorithm, reducer_settings, embedding_model)
 
             if reducer_settings['n_components']  == 6:
-                st.warning("scatter plot, matrix, and line plot not available for 6 dimensions")
-                cone_plot = dc.cone_plot(data_frame, color_scale, size_mode, size_ref)
+                
+                cone_plot = dc.cone_plot(data_frame, color_scale, size_mode, size_ref, reducer_settings['n_components'], reduction_algorithm, embedding_model)
                 st.plotly_chart(cone_plot, width="stretch")
+                st.warning("scatter plot, matrix, and line plot not available for 6 dimensions")
             
             if reducer_settings['n_components'] == 5:
+
+
+                scatter_fig = dc.scatter_plot(data_frame, 'dim1', 'dim2', 'dim3', reducer_settings['n_components'], color_scale, reduction_algorithm, embedding_model)
+
+                st.plotly_chart(scatter_fig, width="stretch")
+
                 st.warning("line plot and matrix not available for 5 dimensions")
                 st.warning("cone plot not available for dimensions 5 through 3")
                 st.warning("matrix plot not available for 5 dimensions and lower")
 
-                scatter_fig = dc.scatter_plot(data_frame, 'dim1', 'dim2', 'dim3', reducer_settings['n_components'], color_scale)
-
-                st.plotly_chart(scatter_fig, width="stretch")
-
             if reducer_settings['n_components'] == 4:
-                st.warning("cone plot not available for dimensions 5 through 3")
-                st.warning("line plot not available for 4 dimensions")
-                
-                scatter_fig = dc.scatter_plot(data_frame, 'dim1', 'dim2', 'dim3', reducer_settings['n_components'], color_scale)
-                matrix_fig = dc.scatter_matrix(data_frame, reducer_settings['n_components'], color_scale)
+
+                scatter_fig = dc.scatter_plot(data_frame, 'dim1', 'dim2', 'dim3', reducer_settings['n_components'], color_scale, reduction_algorithm, embedding_model)
+                matrix_fig = dc.scatter_matrix(data_frame, reducer_settings['n_components'], color_scale, reduction_algorithm, embedding_model)
 
                 st.plotly_chart(scatter_fig, width="stretch")
                 st.plotly_chart(matrix_fig, width="stretch")
-            
-            if reducer_settings['n_components'] == 3:
-                st.warning("cone plot not available for dimensions 5 through 3")
 
-                scatter_fig = dc.scatter_plot(data_frame, 'dim1', 'dim2', 'dim3', reducer_settings['n_components'], color_scale)
-                matrix_fig = dc.scatter_matrix(data_frame, reducer_settings['n_components'], color_scale)
-                line_fig = dc.line_plot(data_frame, 'dim1', 'dim2', 'dim3', reducer_settings['n_components'])
+                st.warning("cone plot not available for dimensions 5 through 3")
+                st.warning("line plot not available for 4 dimensions")
+
+            if reducer_settings['n_components'] == 3:
+                
+
+                scatter_fig = dc.scatter_plot(data_frame, 'dim1', 'dim2', 'dim3', reducer_settings['n_components'], color_scale, reduction_algorithm, embedding_model)
+                matrix_fig = dc.scatter_matrix(data_frame, reducer_settings['n_components'], color_scale, reduction_algorithm, embedding_model)
+                line_fig = dc.line_plot(data_frame, 'dim1', 'dim2', 'dim3', reducer_settings['n_components'], reduction_algorithm, embedding_model)
 
                 st.plotly_chart(scatter_fig, width="stretch")
                 st.plotly_chart(matrix_fig, width="stretch")
                 st.plotly_chart(line_fig, width="stretch")
+
+                st.warning("cone plot not available for dimensions 5 through 3")
         
 
 

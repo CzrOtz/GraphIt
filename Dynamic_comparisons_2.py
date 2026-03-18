@@ -385,8 +385,8 @@ def grand_tour_scatter_plot(data_frame: pd.DataFrame, embedding_model_name: str)
         plot_bgcolor="#161b22"
     )
 
-    fig.layout.updatemenus[0].buttons[0].args[1]['frame']['duration'] = 300
-    fig.layout.updatemenus[0].buttons[0].args[1]['transition']['duration'] = 300
+    fig.layout.updatemenus[0].buttons[0].args[1]['frame']['duration'] = 500
+    fig.layout.updatemenus[0].buttons[0].args[1]['transition']['duration'] = 450
     fig.layout.updatemenus[0].buttons[0].args[1]['frame']['redraw'] = False
     fig.layout.updatemenus[0].buttons[0].args[1]['transition']['easing'] = "sine-in-out"
     fig.layout.updatemenus[0].buttons[0].args[1]['fromcurrent'] = True

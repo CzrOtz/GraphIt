@@ -327,6 +327,9 @@ def GeneratePlots(data_frame):
         
 
 def cosine_similarity_functions():
+        if len(text_data) < 2:
+            st.warning("Cosine similarity requires at least two separate text sources")
+            return
         show_cosine_similarity = dc.run_cosine_similarity(text_data, labels, embedding_model)
         st.write("Cosine Similarity Matrix between the two sets of embeddings:")
         st.write(show_cosine_similarity)
@@ -368,12 +371,25 @@ if st.button("Process Texts") and len(text_data) > 0:
         with st.expander("Cosine Similarity Matrix"):
             cosine_similarity_functions()
 
+    with st.spinner(f"Generating Grand Tour with {embedding_model}..."):
+        with st.expander("Grand Tour Projection"):
+            grand_tour = dc.grand_tour_projection(text_data, labels, embedding_model)
+            st.write("Grand Tour Projection:")
+            st.write("This is a dynamic visualization that continuously rotates the high-dimensional data to help you understand the structure of the data in its original dimensionality. It can reveal patterns and relationships that may not be apparent in static 2D or 3D projections.")
+            gt_scatter_plot_animated = dc.grand_tour_scatter_plot(grand_tour, embedding_model)
+            st.plotly_chart(gt_scatter_plot_animated, width="stretch")
+
+
     with st.spinner(f"reducing dimensions using {reduction_algorithm} and generating plots..."):
         data_frame_reduced_dimmension = dc.produce_dataframe(text_data, labels, reduction_algorithm, reducer_settings, embedding_model)
-    with st.spinner(f"Generating plots..."):
+    with st.spinner(f"Generating Plots..."):
         GeneratePlots(data_frame_reduced_dimmension)
     with st.spinner(f"Calculating metrics..."):      
         metrics(data_frame_reduced_dimmension)
+        st.write("test test test")
+        st.write("test test test")
+        st.write(dc.grand_tour_projection(text_data, labels, embedding_model))
+       
     
 
 

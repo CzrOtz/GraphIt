@@ -6,6 +6,7 @@ import numpy as np
 import plotly.graph_objects as go
 from sklearn.metrics.pairwise import cosine_similarity
 from itertools import combinations
+import streamlit as st
 
 
 
@@ -83,7 +84,25 @@ def run_cosine_similarity(text_passages: list, sources: list, embedding_model_na
     #corresponds to the sentence
 
     
+def grand_tour_projection(text_passages: list, sources: list, embedding_model_name: str):
+    embeddings_list = []
+    all_sentences = []
+    all_sources = []
 
+    for i, source in zip(text_passages, sources):
+        text = utils.clean_text(i)
+        sentence = nltk.sent_tokenize(text)
+        embeddings = utils.embed(sentence, embedding_model_name)
+        embeddings_list.append(embeddings)
+        all_sentences.extend(sentence)
+        all_sources.extend([source] * len(sentence))
+
+    all_embeddings = np.vstack(embeddings_list)
+
+    df = pd.DataFrame(all_embeddings)
+    df['sentences'] = all_sentences
+    df['source'] = all_sources
+    return df
 
 
 def metrics(data_frame: pd.DataFrame) -> pd.DataFrame:
@@ -279,3 +298,97 @@ def cone_plot(data_frame: pd.DataFrame, color_scale: str, sizem_mode: str, size_
 
     return fig
 
+# def grand_tour_scatter_plot(data_frame: pd.DataFrame, embedding_model_name: str) -> px.scatter_3d:
+
+#     frames = []
+#     n_dims = len([col for col in data_frame.columns if isinstance(col, int)])
+#     for i in range(n_dims - 2):
+#         temp = data_frame[['sentences', 'source']].copy()
+#         temp['x'] = data_frame[i].values
+#         temp['y'] = data_frame[i + 1].values
+#         temp['z'] = data_frame[i + 2].values
+#         temp['frame'] = i
+#         frames.append(temp)
+
+#     animation_df = pd.concat(frames, ignore_index=True)
+
+#     low = animation_df.select_dtypes(include='number').drop(columns=['frame']).min().min()
+#     high = animation_df.select_dtypes(include='number').drop(columns=['frame']).max().max()
+
+#     fig = px.scatter_3d(
+#         animation_df,
+#         x='x',
+#         y='y',
+#         z='z',
+#         animation_frame='frame',
+#         color='source',
+#         symbol='source',
+#         hover_data=['sentences', 'source'],
+#         title=f'3D Scatter Plot Embedding Model: {embedding_model_name}',
+#         height=800,
+#         width=1200,
+#         range_x=[low, high],
+#         range_y=[low, high],
+#         range_z=[low, high],
+#     )
+
+#     fig.update_layout(
+#         paper_bgcolor="#161b22",
+#         plot_bgcolor="#161b22"
+#     )
+
+#     fig.layout.updatemenus[0].buttons[0].args[1]['frame']['duration'] = 50
+#     fig.layout.updatemenus[0].buttons[0].args[1]['transition']['duration'] = 30
+#     # fig.layout.updatemenus[0].buttons[0].args[1]['frame']['redraw'] = False
+    
+
+#     return fig
+
+@st.cache_data
+def grand_tour_scatter_plot(data_frame: pd.DataFrame, embedding_model_name: str) -> px.scatter:
+
+    frames = []
+    n_dims = len([col for col in data_frame.columns if isinstance(col, int)])
+    for i in range(n_dims - 2):
+        temp = data_frame[['sentences', 'source']].copy()
+        temp['x'] = data_frame[i].values
+        temp['y'] = data_frame[i + 1].values
+        temp['z'] = data_frame[i + 2].values
+        temp['frame'] = i
+        frames.append(temp)
+
+    animation_df = pd.concat(frames, ignore_index=True)
+
+    low = animation_df.select_dtypes(include='number').drop(columns=['frame']).min().min()
+    high = animation_df.select_dtypes(include='number').drop(columns=['frame']).max().max()
+
+    fig = px.scatter(
+        animation_df,
+        x='x',
+        y='y',
+        animation_frame='frame',
+        animation_group='sentences',
+        color='z',
+        symbol='source',
+        hover_data=['sentences', 'source'],
+        title=f'Grand Tour Embedding Model: {embedding_model_name}',
+        height=800,
+        width=1200,
+        range_x=[low, high],
+        range_y=[low, high],
+        size_max=20,
+        color_continuous_scale="Plasma"
+    )
+
+    fig.update_layout(
+        paper_bgcolor="#161b22",
+        plot_bgcolor="#161b22"
+    )
+
+    fig.layout.updatemenus[0].buttons[0].args[1]['frame']['duration'] = 300
+    fig.layout.updatemenus[0].buttons[0].args[1]['transition']['duration'] = 300
+    fig.layout.updatemenus[0].buttons[0].args[1]['frame']['redraw'] = False
+    fig.layout.updatemenus[0].buttons[0].args[1]['transition']['easing'] = "sine-in-out"
+    fig.layout.updatemenus[0].buttons[0].args[1]['fromcurrent'] = True
+
+    return fig

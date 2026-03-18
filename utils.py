@@ -30,20 +30,53 @@ def open_and_clean_text(file_path):
 
     return cleaned_text
 
-def clean_text(text):
+# def clean_text(text, settings):
+#     cleaned_text = clean(text,
+#         fix_unicode=settings['fix_unicode'],
+#         to_ascii=settings['to_ascii'],
+#         lower=settings['lower'],
+#         no_urls=settings['no_urls'],
+#         no_emails=settings['no_emails'],
+#         no_numbers=settings['no_numbers'],
+#         lang=settings['lang'],
+#         no_punct=settings['no_punctuation'],
+#     )
+
+#     cleaned_text = cleaned_text.replace("\\'", "'").replace('\\"', '"')
+#     cleaned_text = cleaned_text.replace("\\n", " ").replace("\\t", " ")
+#     cleaned_text = re.sub(r'\s+', ' ', cleaned_text).strip()
+
+
+#     return cleaned_text
+
+def clean_text(text, settings):
     cleaned_text = clean(text,
-        fix_unicode=True,
-        to_ascii=True,
-        lower=False,
-        no_urls=True,
-        no_emails=True,
-        no_numbers=False,
-        lang='en',
+        fix_unicode=settings['fix_unicode'],
+        to_ascii=settings['to_ascii'],
+        lower=settings['lower'],
+        no_urls=settings['no_urls'],
+        no_emails=settings['no_emails'],
+        no_numbers=settings['no_numbers'],
+        lang=settings['lang']
     )
 
     cleaned_text = cleaned_text.replace("\\'", "'").replace('\\"', '"')
     cleaned_text = cleaned_text.replace("\\n", " ").replace("\\t", " ")
-    cleaned_text = re.sub(r'\s+', ' ', cleaned_text).strip()
+
+    if settings['remove_brackets']:
+        cleaned_text = re.sub(r'\[.*?\]', '', cleaned_text)
+
+    if settings['remove_curly_braces']:
+        cleaned_text = re.sub(r'\{.*?\}', '', cleaned_text)
+
+    if settings['remove_parentheses']:
+        cleaned_text = re.sub(r'\(.*?\)', '', cleaned_text)
+
+    if settings['remove_special_characters']:
+        cleaned_text = re.sub(r'[#*~^|<>]', '', cleaned_text)
+
+    if settings['remove_extra_whitespace']:
+        cleaned_text = re.sub(r'\s+', ' ', cleaned_text).strip()
 
     return cleaned_text
 

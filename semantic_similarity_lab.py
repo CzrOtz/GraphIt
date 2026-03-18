@@ -2,6 +2,7 @@
 from multiprocessing import reduction
 import plotly.express as px
 
+import utils as ut
 import streamlit as st
 import Dynamic_comparisons_2 as dc
 
@@ -185,6 +186,7 @@ def tsne_settings_func() -> dict:
             "multiplier": multiplier
         }
 
+
 if reduction_algorithm == 'PaCMAP':
     reducer_settings = pacMap_settings_func()
 if reduction_algorithm == 'UMAP':
@@ -194,7 +196,20 @@ if reduction_algorithm == 'tSNE':
 if reduction_algorithm == 'PCA':
     reducer_settings = pca_settings_func()
 
-print("reducer:", repr(reducer_settings))
+
+
+with st.sidebar.expander("Grand Tour Settings"):
+    gt_color_scale = st.selectbox(
+        "Grand Tour Color Scale",
+        ['Viridis', 'Cividis', 'Plasma', 'Inferno', 'Magma', 'Turbo'],
+        index=0
+    )
+
+    gt_frame_duration = st.slider("Frame Duration", value=500, min_value=100, max_value=2000, step=50)
+    gt_transition_duration = st.slider("Transition Duration", value=450, min_value=100, max_value=2000, step=50)
+    gt_easing = st.selectbox("Easing Function", ["cubic-in-out", "quadratic-in-out", "linear", "sine-in-out", "exp-in-out", "circle-in-out", "back-in-out", "elastic-in-out", "bounce-in-out"],index=0)
+
+
 
 multilingual_models = [
     "sentence-transformers/distiluse-base-multilingual-cased-v2",
@@ -218,15 +233,16 @@ st.markdown(f"Current reduction algorithm: **{reduction_algorithm}**")
 
 if reducer_settings['n_components'] >= 4:
     color_scale = st.sidebar.selectbox(
-        "Color scale",
+        "3D plot color scale",
         ['Viridis', 'Cividis', 'Plasma', 'Inferno', 'Magma', 'Turbo'],
         index=0
     )
 else:
     color_scale = None
 
-#this only concerns only cone plot
+#this only concerns only cone plots
 if reducer_settings['n_components']  == 6:
+    st.sidebar.write("Cone Plot Settings")
     size_mode = st.sidebar.selectbox(
         "Size mode",
         ['scaled', 'absolute'],
@@ -239,6 +255,36 @@ if reducer_settings['n_components']  == 6:
 ###### TEXT CAPTURE AREA START
 
 st.divider()
+
+with st.expander("Clean Text Settings"):
+    fix_unicode = st.checkbox("Fix Unicode Characters", value=True)
+    to_ascii = st.checkbox("Convert to ASCII", value=True)
+    lower = st.checkbox("Convert to Lowercase", value=False)
+    no_urls = st.checkbox("Remove URLs", value=True)
+    no_emails = st.checkbox("Remove Emails", value=True)
+    no_numbers = st.checkbox("Remove Numbers", value=False)
+    lang = st.selectbox("Language for cleaning", options=['en', 'es', 'fr', 'de', 'it', 'pt'], index=0)
+    remove_brackets = st.checkbox("Remove Square Brackets and everything in them", value=True)
+    remove_curly_braces = st.checkbox("Remove Curly Braces and everything in them", value=True)
+    remove_parentheses = st.checkbox("Remove Parentheses and everything in them", value=True)
+    remove_extra_whitespace = st.checkbox("Remove Extra Whitespace", value=True)
+    remove_special_characters = st.checkbox("Remove Special Characters", value=False)
+
+
+clean_text_settings = {
+    "fix_unicode": fix_unicode,
+    "to_ascii": to_ascii,
+    "lower": lower,
+    "no_urls": no_urls,
+    "no_emails": no_emails,
+    "no_numbers": no_numbers,
+    "lang": lang,
+    "remove_brackets": remove_brackets,
+    "remove_curly_braces": remove_curly_braces,
+    "remove_parentheses": remove_parentheses,
+    "remove_extra_whitespace": remove_extra_whitespace,
+    "remove_special_characters": remove_special_characters
+}
 
 if 'num_texts' not in st.session_state:
     st.session_state.num_texts = 2
@@ -260,6 +306,8 @@ col1, col2, col3 = st.columns([3, 2, 1])
 #TEXT CAPTURE AREA END
 
 #text boxes start #######################
+
+
 
 st.divider()
 
@@ -330,7 +378,7 @@ def cosine_similarity_functions():
         if len(text_data) < 2:
             st.warning("Cosine similarity requires at least two separate text sources")
             return
-        show_cosine_similarity = dc.run_cosine_similarity(text_data, labels, embedding_model)
+        show_cosine_similarity = dc.run_cosine_similarity(text_data, labels, embedding_model, clean_text_settings)
         st.write("Cosine Similarity Matrix between the two sets of embeddings:")
         st.write(show_cosine_similarity)
         fig = px.bar(
@@ -342,7 +390,14 @@ def cosine_similarity_functions():
             )
         
         st.plotly_chart(fig)
-        
+
+def grand_tour_projection_func():
+    grand_tour = dc.grand_tour_projection(text_data, labels, embedding_model, clean_text_settings)
+    st.write("Grand Tour Projection:")
+    st.write("This is a dynamic visualization that continuously rotates the high-dimensional data to help you understand the structure of the data in its original dimensionality. It can reveal patterns and relationships that may not be apparent in static 2D or 3D projections.")
+    gt_scatter_plot_animated = dc.grand_tour_scatter_plot(grand_tour, embedding_model, gt_color_scale, gt_frame_duration, gt_transition_duration, gt_easing)
+    st.plotly_chart(gt_scatter_plot_animated, width="stretch")
+    st.write(grand_tour)
 
 def metrics(data_frame):
     metrics = dc.metrics(data_frame)
@@ -364,31 +419,45 @@ def metrics(data_frame):
     st.write(metrics['source_list'])
     
 
-
+process_option = st.radio("Process Options", options=["Show Post reduction only", "Show Pre-reduction only", "Show Both"], index=0)
     
-if st.button("Process Texts") and len(text_data) > 0:
-    with st.spinner(f"Processing cosine similarity with {embedding_model}..."):
-        with st.expander("Cosine Similarity Matrix"):
+if st.button("Process Text") and len(text_data) > 0:
+    
+    with st.expander("post cleaning text review"):
+        
+        st.write("If you observe unwanted charcaters, or any issues, please click on the checkboxes above to adjust and remove unwanted characters, then click the 'Process Text' button again to see the updated cleaned text.")
+        st.write("Note, it may be requirted to clean te text further in an external editor if there are specific formatting issues that need to be addressed, such as removing section headers, footnotes, or other non-sentence elements that may interfere with the embedding and analysis process.")
+        st.divider()
+        st.write("This is the text after cleaning")
+        st.divider()
+        for text in text_data:
+            st.write(ut.clean_text(text, clean_text_settings))
+
+    if process_option == "Show Pre-reduction only" or process_option == "Show Both":
+        st.divider()
+        st.markdown("### Pre-reduction Analysis")
+        st.write("Before we reduce the dimensionality of our embeddings, we can analyze the raw cosine similarity between the texts and also explore a Grand Tour projection to get an initial sense of the structure of the data in its original high-dimensional space.")
+        st.divider()
+        with st.spinner(f"Processing cosine similarity with {embedding_model}..."):
             cosine_similarity_functions()
+        with st.spinner(f"Generating Grand Tour with {embedding_model}..."):
+            grand_tour_projection_func()
 
-    with st.spinner(f"Generating Grand Tour with {embedding_model}..."):
-        with st.expander("Grand Tour Projection"):
-            grand_tour = dc.grand_tour_projection(text_data, labels, embedding_model)
-            st.write("Grand Tour Projection:")
-            st.write("This is a dynamic visualization that continuously rotates the high-dimensional data to help you understand the structure of the data in its original dimensionality. It can reveal patterns and relationships that may not be apparent in static 2D or 3D projections.")
-            gt_scatter_plot_animated = dc.grand_tour_scatter_plot(grand_tour, embedding_model)
-            st.plotly_chart(gt_scatter_plot_animated, width="stretch")
+        st.divider()
+    if process_option == "Show Post reduction only" or process_option == "Show Both":
+        st.markdown("### Dimensionality Reduction and Visualization")
+        st.write("Now we will reduce the dimensionality of our embeddings using the selected reduction algorithm and visualize the results. The visualizations will help us understand how the texts relate to each other in the reduced-dimensional space, and we can also calculate various metrics to further analyze the structure of the data after reduction.")
+        st.divider()
+
+        with st.spinner(f"reducing dimensions using {reduction_algorithm} and generating plots..."):
+            data_frame_reduced_dimmension = dc.produce_dataframe(text_data, labels, reduction_algorithm, reducer_settings, embedding_model, clean_text_settings)
+        with st.spinner(f"Generating Plots..."):
+            GeneratePlots(data_frame_reduced_dimmension)
+        with st.spinner(f"Calculating metrics..."):      
+            metrics(data_frame_reduced_dimmension)
 
 
-    with st.spinner(f"reducing dimensions using {reduction_algorithm} and generating plots..."):
-        data_frame_reduced_dimmension = dc.produce_dataframe(text_data, labels, reduction_algorithm, reducer_settings, embedding_model)
-    with st.spinner(f"Generating Plots..."):
-        GeneratePlots(data_frame_reduced_dimmension)
-    with st.spinner(f"Calculating metrics..."):      
-        metrics(data_frame_reduced_dimmension)
-        st.write("test test test")
-        st.write("test test test")
-        st.write(dc.grand_tour_projection(text_data, labels, embedding_model))
+
        
     
 

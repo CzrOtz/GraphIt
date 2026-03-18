@@ -10,13 +10,13 @@ import streamlit as st
 
 
 
-def produce_dataframe(text_passages: list, sources: list, reducer: str, settings: dict, embedding_model_name: str) -> pd.DataFrame:
+def produce_dataframe(text_passages: list, sources: list, reducer: str, settings: dict, embedding_model_name: str, clean_settings: dict) -> pd.DataFrame:
     embeddings_list = []
     all_sentences = []
     all_sources = []
 
     for i, source in zip(text_passages, sources):
-        text = utils.clean_text(i)
+        text = utils.clean_text(i, clean_settings)
         sentence = nltk.sent_tokenize(text)
         embeddings = utils.embed(sentence, embedding_model_name)
         embeddings_list.append(embeddings)
@@ -49,12 +49,12 @@ def produce_dataframe(text_passages: list, sources: list, reducer: str, settings
 
     return df_combined
 
-def run_cosine_similarity(text_passages: list, sources: list, embedding_model_name: str):
+def run_cosine_similarity(text_passages: list, sources: list, embedding_model_name: str, clean_settings: dict) -> pd.DataFrame:
     embeddings_list = []
     sentences_list = []
 
-    for i, source in zip(text_passages, sources):
-        text = utils.clean_text(i)
+    for text_passage, source in zip(text_passages, sources):
+        text = utils.clean_text(text_passage, clean_settings)
         sentences = nltk.sent_tokenize(text)
         embeddings = utils.embed(sentences, embedding_model_name)
         embeddings_list.append(embeddings)
@@ -83,14 +83,15 @@ def run_cosine_similarity(text_passages: list, sources: list, embedding_model_na
     #embedings_list[i][j]
     #corresponds to the sentence
 
+
     
-def grand_tour_projection(text_passages: list, sources: list, embedding_model_name: str):
+def grand_tour_projection(text_passages: list, sources: list, embedding_model_name: str, clean_settings: dict) -> pd.DataFrame:
     embeddings_list = []
     all_sentences = []
     all_sources = []
 
     for i, source in zip(text_passages, sources):
-        text = utils.clean_text(i)
+        text = utils.clean_text(i, clean_settings)
         sentence = nltk.sent_tokenize(text)
         embeddings = utils.embed(sentence, embedding_model_name)
         embeddings_list.append(embeddings)
@@ -344,8 +345,8 @@ def cone_plot(data_frame: pd.DataFrame, color_scale: str, sizem_mode: str, size_
 
 #     return fig
 
-@st.cache_data
-def grand_tour_scatter_plot(data_frame: pd.DataFrame, embedding_model_name: str) -> px.scatter:
+# @st.cache_data
+def grand_tour_scatter_plot(data_frame: pd.DataFrame, embedding_model_name: str, color_scale: str, frame_duration: int, transition_duration: int, easing: str) -> px.scatter:
 
     frames = []
     n_dims = len([col for col in data_frame.columns if isinstance(col, int)])
@@ -377,18 +378,27 @@ def grand_tour_scatter_plot(data_frame: pd.DataFrame, embedding_model_name: str)
         range_x=[low, high],
         range_y=[low, high],
         size_max=20,
-        color_continuous_scale="Plasma"
+        color_continuous_scale=color_scale
     )
 
     fig.update_layout(
         paper_bgcolor="#161b22",
-        plot_bgcolor="#161b22"
+        plot_bgcolor="#161b22",
+            legend=dict(
+                orientation="h",
+                x=0,
+                y=0.95,
+                xanchor="left",
+                yanchor="bottom"
+            )
     )
 
-    fig.layout.updatemenus[0].buttons[0].args[1]['frame']['duration'] = 500
-    fig.layout.updatemenus[0].buttons[0].args[1]['transition']['duration'] = 450
+
+
+    fig.layout.updatemenus[0].buttons[0].args[1]['frame']['duration'] = frame_duration
+    fig.layout.updatemenus[0].buttons[0].args[1]['transition']['duration'] = transition_duration
     fig.layout.updatemenus[0].buttons[0].args[1]['frame']['redraw'] = False
-    fig.layout.updatemenus[0].buttons[0].args[1]['transition']['easing'] = "sine-in-out"
+    fig.layout.updatemenus[0].buttons[0].args[1]['transition']['easing'] = easing
     fig.layout.updatemenus[0].buttons[0].args[1]['fromcurrent'] = True
 
     return fig

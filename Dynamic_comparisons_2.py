@@ -8,6 +8,8 @@ from sklearn.metrics.pairwise import cosine_similarity
 from itertools import combinations
 import streamlit as st
 
+# nltk.download('punkt')
+# nltk.download('punkt_tab')
 
 
 def produce_dataframe(text_passages: list, sources: list, reducer: str, settings: dict, embedding_model_name: str, clean_settings: dict) -> pd.DataFrame:
@@ -149,12 +151,12 @@ def scatter_plot(data_frame: pd.DataFrame, x_cordinate: str, y_cordinate: str, z
         width=1200
     )
 
-    fig_pacmap.update_layout(
-        paper_bgcolor="#161b22",
-        plot_bgcolor="#161b22"
-        )
+    # fig_pacmap.update_layout(
+    #     paper_bgcolor="#161b22",
+    #     plot_bgcolor="#161b22"
+    #     )
 
-    if dimensions == 4:
+    if dimensions >= 4:
         fig_pacmap.update_layout(
             legend=dict(x=0.01, y=0.99, xanchor="left", yanchor="top"),
             coloraxis_colorbar=dict(x=1.08, y=0.5, len=0.8),
@@ -190,10 +192,10 @@ def line_plot(data_frame: pd.DataFrame, x_cordinate: str, y_cordinate: str, z_co
         width=1200
     )
 
-    fig_pacmap.update_layout(
-        paper_bgcolor="#161b22",
-        plot_bgcolor="#161b22"
-        )
+    # fig_pacmap.update_layout(
+    #     paper_bgcolor="#161b22",
+    #     plot_bgcolor="#161b22"
+    #     )
 
     if dimensions == 4:
         fig_pacmap.update_layout(
@@ -230,8 +232,8 @@ def scatter_matrix(data_frame: pd.DataFrame, dimensions: int, color_scale: str, 
     )
 
     fig_matrix.update_layout(
-        paper_bgcolor="#161b22",
-        plot_bgcolor="#161b22",
+        # paper_bgcolor="#161b22",
+        # plot_bgcolor="#161b22",
         legend=dict(
             orientation="v",
             yanchor="top",
@@ -282,6 +284,7 @@ def cone_plot(data_frame: pd.DataFrame, color_scale: str, sizem_mode: str, size_
             "u: %{u:.2f}<br>"
             "v: %{v:.2f}<br>"
             "w: %{w:.2f}<br>"
+            "<extra></extra>"
         )
     ))
 
@@ -289,7 +292,7 @@ def cone_plot(data_frame: pd.DataFrame, color_scale: str, sizem_mode: str, size_
         height=1200,
         width=1500,
         title=f'3D Cone Plot - Reducer: {reducer} | Embedding Model: {embedding_model_name}',
-        paper_bgcolor="#161b22",
+        # paper_bgcolor="#161b22",
         scene=dict(
             xaxis_title="dim1",
             yaxis_title="dim2",
@@ -299,62 +302,14 @@ def cone_plot(data_frame: pd.DataFrame, color_scale: str, sizem_mode: str, size_
 
     return fig
 
-# def grand_tour_scatter_plot(data_frame: pd.DataFrame, embedding_model_name: str) -> px.scatter_3d:
-
-#     frames = []
-#     n_dims = len([col for col in data_frame.columns if isinstance(col, int)])
-#     for i in range(n_dims - 2):
-#         temp = data_frame[['sentences', 'source']].copy()
-#         temp['x'] = data_frame[i].values
-#         temp['y'] = data_frame[i + 1].values
-#         temp['z'] = data_frame[i + 2].values
-#         temp['frame'] = i
-#         frames.append(temp)
-
-#     animation_df = pd.concat(frames, ignore_index=True)
-
-#     low = animation_df.select_dtypes(include='number').drop(columns=['frame']).min().min()
-#     high = animation_df.select_dtypes(include='number').drop(columns=['frame']).max().max()
-
-#     fig = px.scatter_3d(
-#         animation_df,
-#         x='x',
-#         y='y',
-#         z='z',
-#         animation_frame='frame',
-#         color='source',
-#         symbol='source',
-#         hover_data=['sentences', 'source'],
-#         title=f'3D Scatter Plot Embedding Model: {embedding_model_name}',
-#         height=800,
-#         width=1200,
-#         range_x=[low, high],
-#         range_y=[low, high],
-#         range_z=[low, high],
-#     )
-
-#     fig.update_layout(
-#         paper_bgcolor="#161b22",
-#         plot_bgcolor="#161b22"
-#     )
-
-#     fig.layout.updatemenus[0].buttons[0].args[1]['frame']['duration'] = 50
-#     fig.layout.updatemenus[0].buttons[0].args[1]['transition']['duration'] = 30
-#     # fig.layout.updatemenus[0].buttons[0].args[1]['frame']['redraw'] = False
-    
-
-#     return fig
-
-# @st.cache_data
-def grand_tour_scatter_plot(data_frame: pd.DataFrame, embedding_model_name: str, color_scale: str, frame_duration: int, transition_duration: int, easing: str) -> px.scatter:
+def grand_tour_scatter_plot(data_frame: pd.DataFrame, embedding_model_name: str, frame_duration: int, transition_duration: int, easing: str, point_size: int) -> px.scatter:
 
     frames = []
     n_dims = len([col for col in data_frame.columns if isinstance(col, int)])
-    for i in range(n_dims - 2):
+    for i in range(n_dims - 1):
         temp = data_frame[['sentences', 'source']].copy()
         temp['x'] = data_frame[i].values
         temp['y'] = data_frame[i + 1].values
-        temp['z'] = data_frame[i + 2].values
         temp['frame'] = i
         frames.append(temp)
 
@@ -369,7 +324,7 @@ def grand_tour_scatter_plot(data_frame: pd.DataFrame, embedding_model_name: str,
         y='y',
         animation_frame='frame',
         animation_group='sentences',
-        color='z',
+        color='source',
         symbol='source',
         hover_data=['sentences', 'source'],
         title=f'Grand Tour Embedding Model: {embedding_model_name}',
@@ -378,21 +333,23 @@ def grand_tour_scatter_plot(data_frame: pd.DataFrame, embedding_model_name: str,
         range_x=[low, high],
         range_y=[low, high],
         size_max=20,
-        color_continuous_scale=color_scale
     )
 
     fig.update_layout(
-        paper_bgcolor="#161b22",
-        plot_bgcolor="#161b22",
-            legend=dict(
-                orientation="h",
-                x=0,
-                y=0.95,
-                xanchor="left",
-                yanchor="bottom"
-            )
+        # paper_bgcolor="#161b22",
+        # plot_bgcolor="#161b22",
+        legend=dict(
+            orientation="h",
+            x=0,
+            y=0.95,
+            xanchor="left",
+            yanchor="bottom"
+        ),
+        margin=dict(r=50)
+
     )
 
+    fig.update_traces(marker=dict(size=point_size))  # Adjust marker size as needed
 
 
     fig.layout.updatemenus[0].buttons[0].args[1]['frame']['duration'] = frame_duration

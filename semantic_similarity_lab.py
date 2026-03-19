@@ -6,6 +6,8 @@ import utils as ut
 import streamlit as st
 import Dynamic_comparisons_2 as dc
 
+import pandas as pd
+
 #add this timorrow
 #sklearn.metrics.pairwise.cosine_similarity — takes two arrays of embeddings and returns a similarity matrix
 
@@ -78,7 +80,7 @@ model_selection = [
 "e5-large-v2"
 ]
 
-
+st.sidebar.title("Controls")
 
 embedding_model = st.sidebar.selectbox("Embedding Model", options=model_selection, index=0)
 embedding_model = models[model_selection.index(embedding_model)]
@@ -91,7 +93,7 @@ reduction_algorithm = st.sidebar.selectbox(
     index=0
 )
 
-st.sidebar.title("controls")
+
 
 
 # dimension_count = st.sidebar.selectbox("Dimension count/n components", [3, 4, 5, 6], index=0)
@@ -199,15 +201,10 @@ if reduction_algorithm == 'PCA':
 
 
 with st.sidebar.expander("Grand Tour Settings"):
-    gt_color_scale = st.selectbox(
-        "Grand Tour Color Scale",
-        ['Viridis', 'Cividis', 'Plasma', 'Inferno', 'Magma', 'Turbo'],
-        index=0
-    )
-
-    gt_frame_duration = st.slider("Frame Duration", value=500, min_value=100, max_value=2000, step=50)
-    gt_transition_duration = st.slider("Transition Duration", value=450, min_value=100, max_value=2000, step=50)
-    gt_easing = st.selectbox("Easing Function", ["cubic-in-out", "quadratic-in-out", "linear", "sine-in-out", "exp-in-out", "circle-in-out", "back-in-out", "elastic-in-out", "bounce-in-out"],index=0)
+    gt_point_size = st.slider("Cordinae Point Size", value=10, min_value=1, max_value=15, step=1)
+    gt_frame_duration = st.slider("Animation Frame Duration", value=500, min_value=100, max_value=2000, step=50)
+    gt_transition_duration = st.slider("Animation Transition Duration", value=450, min_value=100, max_value=2000, step=50)
+    gt_easing = st.selectbox("Animation Easing Function", ["cubic-in-out", "quadratic-in-out", "linear", "sine-in-out", "exp-in-out", "circle-in-out", "back-in-out", "elastic-in-out", "bounce-in-out"],index=0)
 
 
 
@@ -249,7 +246,7 @@ if reducer_settings['n_components']  == 6:
         index=0
     )
 
-    size_ref = st.sidebar.number_input("Size reference", value=5)
+    size_ref = st.sidebar.number_input("Size reference", value=2)
 
 
 ###### TEXT CAPTURE AREA START
@@ -395,11 +392,64 @@ def grand_tour_projection_func():
     grand_tour = dc.grand_tour_projection(text_data, labels, embedding_model, clean_text_settings)
     st.write("Grand Tour Projection:")
     st.write("This is a dynamic visualization that continuously rotates the high-dimensional data to help you understand the structure of the data in its original dimensionality. It can reveal patterns and relationships that may not be apparent in static 2D or 3D projections.")
-    gt_scatter_plot_animated = dc.grand_tour_scatter_plot(grand_tour, embedding_model, gt_color_scale, gt_frame_duration, gt_transition_duration, gt_easing)
+    gt_scatter_plot_animated = dc.grand_tour_scatter_plot(grand_tour, embedding_model, gt_frame_duration, gt_transition_duration, gt_easing, gt_point_size)
     st.plotly_chart(gt_scatter_plot_animated, width="stretch")
     st.write(grand_tour)
 
 def metrics(data_frame):
+
+    st.write("**Metrics and Analysis:**")
+
+    with st.expander("Rediced Dimension DataFrame"):
+        st.write("This is the DataFrame containing the reduced-dimensionality embeddings for each sentence, along with their corresponding sources and original sentences. You can use this DataFrame to explore the relationships between the sentences in the reduced-dimensional space and to calculate various metrics based on their positions in this space.")
+        st.write(data_frame)
+
+    dims = ["dim1", "dim2", "dim3"] + [f"dim{i}" for i in range(4, len(data_frame.columns) + 1) if f'dim{i}' in data_frame.columns]
+
+    extremes = {}
+
+    for dim in dims:
+        extremes[f'max_{dim}'] = [data_frame[dim].idxmax(), data_frame[dim].max(), data_frame.loc[data_frame[dim].idxmax(), 'source'], data_frame.loc[data_frame[dim].idxmax(), 'sentences']]
+        extremes[f'min_{dim}'] = [data_frame[dim].idxmin(), data_frame[dim].min(), data_frame.loc[data_frame[dim].idxmin(), 'source'], data_frame.loc[data_frame[dim].idxmin(), 'sentences']]
+
+    st.write("**Extremes in Each Dimension:**")
+    extrmes_df = pd.DataFrame(extremes).T
+    extrmes_df.columns = ['index', 'value', 'source', 'sentence']
+    st.write(extrmes_df)
+
+    copy_df = data_frame.copy()
+    copy_df['magnitude'] = px.np.sqrt(copy_df[dims].pow(2).sum(axis=1))
+
+    max_magnitude = copy_df.loc[copy_df['magnitude'].idxmax()]
+    min_magnitude = copy_df.loc[copy_df['magnitude'].idxmin()]
+    mid_magnitude = copy_df.loc[(copy_df['magnitude'] - copy_df['magnitude'].mean()).abs().idxmin()]
+
+    magnitude_df = pd.DataFrame([
+        {
+            "type": "max_magnitude",
+            "magnitude": max_magnitude['magnitude'],
+            "source": max_magnitude['source'],
+            "sentence": max_magnitude['sentences'],
+            "index": max_magnitude.name
+        },
+        {
+            "type": "min_magnitude",
+            "magnitude": min_magnitude['magnitude'],
+            "source": min_magnitude['source'],
+            "sentence": min_magnitude['sentences'],
+            "index": min_magnitude.name
+        },
+        {
+            "type": "mid_magnitude",
+            "magnitude": mid_magnitude['magnitude'],
+            "source": mid_magnitude['source'],
+            "sentence": mid_magnitude['sentences'],
+            "index": mid_magnitude.name
+        }
+    ])
+    st.write("**Magnitude Metrics:**")
+    st.write(magnitude_df)
+
     metrics = dc.metrics(data_frame)
     st.write("**Description:**")
     st.write(metrics['description'])
@@ -417,7 +467,8 @@ def metrics(data_frame):
     st.write(metrics['total_sentences'])
     st.write("**Source List:**")
     st.write(metrics['source_list'])
-    
+
+
 
 process_option = st.radio("Process Options", options=["Show Post reduction only", "Show Pre-reduction only", "Show Both"], index=0)
     

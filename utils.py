@@ -1,5 +1,4 @@
 import re
-from turtle import st
 from cleantext import clean
 from sentence_transformers import SentenceTransformer
 from sklearn.decomposition import PCA
@@ -30,24 +29,6 @@ def open_and_clean_text(file_path):
 
     return cleaned_text
 
-# def clean_text(text, settings):
-#     cleaned_text = clean(text,
-#         fix_unicode=settings['fix_unicode'],
-#         to_ascii=settings['to_ascii'],
-#         lower=settings['lower'],
-#         no_urls=settings['no_urls'],
-#         no_emails=settings['no_emails'],
-#         no_numbers=settings['no_numbers'],
-#         lang=settings['lang'],
-#         no_punct=settings['no_punctuation'],
-#     )
-
-#     cleaned_text = cleaned_text.replace("\\'", "'").replace('\\"', '"')
-#     cleaned_text = cleaned_text.replace("\\n", " ").replace("\\t", " ")
-#     cleaned_text = re.sub(r'\s+', ' ', cleaned_text).strip()
-
-
-#     return cleaned_text
 
 def clean_text(text, settings):
     cleaned_text = clean(text,
@@ -88,17 +69,18 @@ def load_embedding_model(model_name: str):
 
 def embed(tokenized_sentences, embedding_model_name):
     if len(tokenized_sentences) < 3:
-        raise ValueError("At least 3 sentences are required for embedding.")
+        # raise ValueError("At least 3 sentences are required for embedding.")
+        st.error("At least 3 sentences are required per text field for processing. Please add more sentences or remove an unused text field.")
+        st.stop()
     model = load_embedding_model(embedding_model_name)
     embeddings = model.encode(tokenized_sentences, show_progress_bar=True)
     return embeddings
 
-def pca_reduce(embeddings, dimensions):
-    pca = PCA(n_components=dimensions)
-    reduced_embeddings = pca.fit_transform(embeddings)
-    return reduced_embeddings
+
 
 def pca_reduce_fully_tunable(embeddings, settings):
+    
+        
     pca = PCA(
         n_components=settings['n_components'],
         svd_solver=settings['svd_solver'],
@@ -107,12 +89,10 @@ def pca_reduce_fully_tunable(embeddings, settings):
     )
     return pca.fit_transform(embeddings)
 
-def umap_reduce(embeddings, dimensions, neighbors):
-    umap_reduce = umap.UMAP(n_components=dimensions, n_neighbors=neighbors, metric='cosine', random_state=42, min_dist=0.1)
-    umap_reduced_embeddings = umap_reduce.fit_transform(embeddings)
-    return umap_reduced_embeddings
+
 
 def umap_reduce_fully_tunable(embeddings, settings):
+    
     umap_reduce = umap.UMAP(
         n_components=settings['n_components'],
         n_neighbors=settings['n_neighbors'],
@@ -123,12 +103,13 @@ def umap_reduce_fully_tunable(embeddings, settings):
     umap_reduced_embeddings = umap_reduce.fit_transform(embeddings)
     return umap_reduced_embeddings
 
-def tsne_reduce(embeddings, dimensions):
-    tsne = TSNE(n_components=dimensions)
-    tsne_reduced_embeddings = tsne.fit_transform(embeddings)
-    return tsne_reduced_embeddings
+
 
 def tsne_reduce_fully_tunable(embeddings, settings):
+    if len(embeddings) >= settings['perplexity']:
+        st.error(f"The number of total sences is {len(embeddings)}. Current perplexity is {settings['perplexity']}. Perplexity must be less than the total samples/sences. Please adjust the perplexity, or add more sentences to the text fields.")
+        st.stop()
+
     tsne = TSNE(
         n_components=settings['n_components'],
         perplexity=settings['perplexity'],
@@ -139,12 +120,11 @@ def tsne_reduce_fully_tunable(embeddings, settings):
     tsne_reduced_embeddings = tsne.fit_transform(embeddings)
     return tsne_reduced_embeddings
 
-def pacmap_reduce(embeddings, dimensions, neighbors):
-    reducer = pacmap.PaCMAP(n_components=dimensions, n_neighbors=neighbors, MN_ratio=0.5, FP_ratio=2, random_state=42, distance='angular', num_iters=1000, lr=1.0)
-    pacmap_reduced_embeddings = reducer.fit_transform(embeddings,init='pca')
-    return pacmap_reduced_embeddings
+
 
 def pacmap_reduce_fully_tunable(embeddings, settings):
+    
+
     reducer = pacmap.PaCMAP(
         n_components=settings['n_components'],
         n_neighbors=settings['n_neighbors'],
@@ -199,8 +179,6 @@ def create_6d_dataframe(reduced_embeddings, sentences, multiplier, source):
     df['dim2'] *= multiplier
     df['dim3'] *= multiplier
     df['dim4'] *= multiplier
-    df['dim5'] *= multiplier
-    df['dim6'] *= multiplier
     df['dim5'] *= multiplier
     df['dim6'] *= multiplier
     return df

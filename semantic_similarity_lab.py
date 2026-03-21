@@ -1,15 +1,12 @@
 # python -m streamlit run semantic_similarity_lab.py
 from multiprocessing import reduction
 import plotly.express as px
-
+import numpy as np
 import utils as ut
 import streamlit as st
 import Dynamic_comparisons_2 as dc
 
 import pandas as pd
-
-#add this timorrow
-#sklearn.metrics.pairwise.cosine_similarity — takes two arrays of embeddings and returns a similarity matrix
 
 st.set_page_config(layout="wide")
 
@@ -300,6 +297,7 @@ for i in range(st.session_state.num_texts):
 
 col1, col2, col3 = st.columns([3, 2, 1])
 
+
 #TEXT CAPTURE AREA END
 
 #text boxes start #######################
@@ -310,14 +308,17 @@ st.divider()
 
 add_text_col, remove_text_col = st.columns(2)
 
-with add_text_col:
-    if st.button("Add Another Text Box"):
-        st.session_state.num_texts += 1
-        st.rerun()
+if st.session_state.num_texts < 10:
+    with add_text_col:
+        if st.button("Add Another Text Box"):
+            st.session_state.num_texts += 1
+            st.rerun()
+else:    
+    st.warning("Maximum number of text boxes reached")
 
 with remove_text_col:
-    if st.button("Remove Text Box"):
-        if st.session_state.num_texts > 1:
+    if st.session_state.num_texts > 1:
+        if st.button("Remove Text Box"):
             st.session_state.num_texts -= 1
             st.rerun()
 
@@ -418,7 +419,7 @@ def metrics(data_frame):
     st.write(extrmes_df)
 
     copy_df = data_frame.copy()
-    copy_df['magnitude'] = px.np.sqrt(copy_df[dims].pow(2).sum(axis=1))
+    copy_df['magnitude'] = np.sqrt(copy_df[dims].pow(2).sum(axis=1))
 
     max_magnitude = copy_df.loc[copy_df['magnitude'].idxmax()]
     min_magnitude = copy_df.loc[copy_df['magnitude'].idxmin()]
@@ -471,11 +472,14 @@ def metrics(data_frame):
 
 
 process_option = st.radio("Process Options", options=["Show Post reduction only", "Show Pre-reduction only", "Show Both"], index=0)
-    
+process_text = True
+
+  
 if st.button("Process Text") and len(text_data) > 0:
     
+   
     with st.expander("post cleaning text review"):
-        
+            
         st.write("If you observe unwanted charcaters, or any issues, please click on the checkboxes above to adjust and remove unwanted characters, then click the 'Process Text' button again to see the updated cleaned text.")
         st.write("Note, it may be requirted to clean te text further in an external editor if there are specific formatting issues that need to be addressed, such as removing section headers, footnotes, or other non-sentence elements that may interfere with the embedding and analysis process.")
         st.divider()
@@ -506,6 +510,7 @@ if st.button("Process Text") and len(text_data) > 0:
             GeneratePlots(data_frame_reduced_dimmension)
         with st.spinner(f"Calculating metrics..."):      
             metrics(data_frame_reduced_dimmension)
+
 
 
 

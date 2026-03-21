@@ -133,7 +133,11 @@ def scatter_plot(data_frame: pd.DataFrame, x_cordinate: str, y_cordinate: str, z
         size_cordinate = "dim5"
     else:
         size_cordinate = None
-    if dimensions == 4: color_cordinate = "dim4"
+
+    if dimensions == 4:
+        color_cordinate = "dim4"
+
+
     if dimensions == 3: color_cordinate = "source"
 
     fig_pacmap = px.scatter_3d(

@@ -65,7 +65,7 @@ def clean_text(text, settings):
 
 @st.cache_resource
 def load_embedding_model(model_name: str):
-    return SentenceTransformer(model_name, device='cuda')
+    return SentenceTransformer(model_name, device='cpu')
 
 def embed(tokenized_sentences, embedding_model_name):
     if len(tokenized_sentences) < 3:

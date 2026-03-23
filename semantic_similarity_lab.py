@@ -4,29 +4,72 @@ import plotly.express as px
 import numpy as np
 import utils as ut
 import streamlit as st
-import Dynamic_comparisons_2 as dc
+import GraphIt.process_functions as dc
 
 import pandas as pd
 
 st.set_page_config(layout="wide")
 
-st.title("Semantic Similarity Lab")
+st.title("GraphIt: A Semantic Similarity Lab")
 
+with st.expander("📖 About GraphIt: Semantic Similarity Lab", expanded=True):
+    st.markdown("""
+    This laboratory enables the multi-dimensional visualization of text embeddings using state-of-the-art manifold learning and dimensionality reduction. 
+    By projecting high-dimensional vectors into a visible coordinate system, you can analyze semantic clusters, document overlap, and latent thematic structures.
+    """)
 
-with st.expander("About this tool"):
-    st.write(
-        """This tool allows you to visualize the semantic similarity of texts using various embedding models and dimensionality reduction algorithms. 
-        You can input multiple texts, select an embedding model, and choose a dimensionality reduction technique to see how the texts relate to each other in a reduced-dimensional space."""
-    )
+    st.divider()
 
-    st.write("""You are able to visualize up to 6 dimensions. 
-        Please note, visualization options will vary based on the number of dimensions you choose. For 3 dimensions, scatter, line, and matrix plots are available. For 4 dimensions, scatter and matrix plots are available. For 5 dimensions, 
-        only scatter plot is available. For 6 dimensions, only cone plot is available. t-SNE is limited to 3 dimensions for visualization purposes using the barnes-hut method, so if you select t-SNE, the dimension count will be set to 3 and the other dimension options will be hidden."""
-    )
+    ### Visual Logic Mapping
+    st.markdown("#### 📐 Visualization Capabilities")
+    
+    # Table for quick dimension reference
+    st.markdown("""
+    | Dimensions | Available Plot Types | Encoding Logic |
+    | :--- | :--- | :--- |
+    | **3D** | Scatter, Line, Matrix | X, Y, Z Coordinates |
+    | **4D** | Scatter, Matrix | X, Y, Z + Color (`dim4`) |i 
+    | **5D** | Scatter | X, Y, Z + Color (`dim4`) + Size (`dim5`).abs() |
+    | **6D** | Cone Plot | X, Y, Z (Pos) + U, V, W (Vectors) |
+    
+    *Note: **t-SNE** is restricted to 3D via the Barnes-Hut method for optimized performance.*
+    """)
 
-    st.write(
-        """ more text later"""
-    )
+    st.divider()
+
+    ### Workflow Instructions
+    st.markdown("#### 🛠️ Operational Workflow")
+    
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        st.markdown("""
+        **1. Engine Configuration**
+        Select an **Embedding Model** and **Reduction Algorithm** in the sidebar. Adjust hyperparameters like *Perplexity* (t-SNE) or *Learning Rate* (PaCMAP) to resolve local vs. global data structures.
+
+        **2. Data Ingestion**
+        Input your text documents (Max: 10). At least two sources are required for **Cosine Similarity** analysis, though single-document semantic drift can be analyzed individually.
+        """)
+
+    with col2:
+        st.markdown("""
+        **3. Pre-processing & Sanitization**
+        Configure **Clean Text Settings** to remove noise (URLs, metadata, special characters). High-quality vectorization depends on clean input; complex formatting should be handled in an external editor prior to pasting.
+
+        **4. Execution & Analytics**
+        Click **Process Text**. Select **Pre-reduction** for raw similarity scores or **Post-reduction** for spatial visualizations and centroid metrics.
+        """)
+
+    st.divider()
+
+    ### Contribution CTA
+    st.markdown("""
+    **🚀 Open Source & Collaboration**
+    Think there is a feature missing, or want to make a custom modification for your use case? This tool is built for the community.
+    * [**Fork the Repository**](https://github.com/CzrOtz/SemanticsMap)
+    * [**Submit a Pull Request**](https://github.com/CzrOtz/SemanticsMap/pulls)
+    * [**Report an Issue**](https://github.com/CzrOtz/SemanticsMap/issues)
+    """)
 
 #SIDE BAR AREA
 models = [
@@ -81,6 +124,8 @@ st.sidebar.title("Controls")
 
 embedding_model = st.sidebar.selectbox("Embedding Model", options=model_selection, index=0)
 embedding_model = models[model_selection.index(embedding_model)]
+hf_url = f"https://huggingface.co/{embedding_model}"
+st.sidebar.markdown(f"🔗 [View Model Card on Hugging Face]({hf_url})")
 
     
 
@@ -89,6 +134,15 @@ reduction_algorithm = st.sidebar.selectbox(
     ['PaCMAP', 'UMAP', 'PCA', 'tSNE'],
     index=0
 )
+
+algo_links = {
+    "PaCMAP": "https://github.com/YingfanWang/PaCMAP",
+    "UMAP": "https://umap-learn.readthedocs.io/",
+    "PCA": "https://scikit-learn.org/stable/modules/generated/sklearn.decomposition.PCA.html",
+    "tSNE": "https://scikit-learn.org/stable/modules/generated/sklearn.manifold.TSNE.html"
+}
+
+st.sidebar.markdown(f"🔬 [Read {reduction_algorithm} Documentation]({algo_links[reduction_algorithm]})")
 
 
 

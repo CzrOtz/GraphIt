@@ -8,8 +8,8 @@ from sklearn.metrics.pairwise import cosine_similarity
 from itertools import combinations
 import streamlit as st
 
-# nltk.download('punkt')
-# nltk.download('punkt_tab')
+nltk.download('punkt')
+nltk.download('punkt_tab')
 
 
 def produce_dataframe(text_passages: list, sources: list, reducer: str, settings: dict, embedding_model_name: str, clean_settings: dict) -> pd.DataFrame:

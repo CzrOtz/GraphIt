@@ -506,6 +506,14 @@ def grand_tour_projection_func():
     st.plotly_chart(gt_scatter_plot_animated, width="stretch")
     st.write(grand_tour)
 
+def centroid_metrics_func(data_frame):
+    if reducer_settings["n_components"] < 6:
+        centroid_scatter = dc.scatter_plot_v2(data_frame.reset_index(), 'dim1', 'dim2', 'dim3', reducer_settings['n_components'], color_scale, reduction_algorithm, embedding_model)
+    else:
+        centroid_scatter = dc.cone_plot(data_frame, color_scale, size_mode, size_ref, reducer_settings['n_components'], reduction_algorithm, embedding_model)
+
+    return centroid_scatter
+
 def metrics(data_frame):
 
     st.write("**Metrics and Analysis:**")
@@ -571,8 +579,23 @@ def metrics(data_frame):
     st.write(metrics['sentence_counts_per_source'])
     st.write("**Centroid per Source:**")
     st.write(metrics['centroid_per_source'])
+    with st.expander("Centroid Scatter Plot"):
+        if reducer_settings["n_components"] < 5:
+            centroid_scatter = dc.scatter_plot_v2(metrics["centroid_per_source"].reset_index(), 'dim1', 'dim2', 'dim3', reducer_settings['n_components'], color_scale, reduction_algorithm, embedding_model, False)
+            st.plotly_chart(centroid_scatter, width="stretch")
+        else:
+            st.warning("Centroid scatter plot not available for 5 and 6 dimensions")
+
     st.write("**Standard Deviation per Source:**")
     st.write(metrics['std_per_source'])
+    with st.expander("Standard Deviation Scatter Plot"):
+        if reducer_settings["n_components"] < 5:
+            
+            centroid_scatter = dc.scatter_plot_v2(metrics["std_per_source"].reset_index(), 'dim1', 'dim2', 'dim3', reducer_settings['n_components'], color_scale, reduction_algorithm, embedding_model, True)
+            st.plotly_chart(centroid_scatter, width="stretch")
+        else:
+            st.warning("Standard deviation scatter plot not available for 5 and 6 dimensions")
+
     st.write("**Total Sentences:**")
     st.write(metrics['total_sentences'])
     st.write("**Source List:**")

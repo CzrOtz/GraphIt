@@ -154,10 +154,6 @@ def scatter_plot(data_frame: pd.DataFrame, x_cordinate: str, y_cordinate: str, z
         width=1200
     )
 
-    # fig_pacmap.update_layout(
-    #     paper_bgcolor="#161b22",
-    #     plot_bgcolor="#161b22"
-    #     )
 
     if dimensions >= 4:
         fig_pacmap.update_layout(
@@ -175,6 +171,65 @@ def scatter_plot(data_frame: pd.DataFrame, x_cordinate: str, y_cordinate: str, z
                 )
             )
         )   
+
+    return fig_pacmap
+
+def scatter_plot_v2(data_frame: pd.DataFrame, x_cordinate: str, y_cordinate: str, z_cordinate: str, dimensions: int, color_scale: str, reducer: str, embedding_model_name: str, show_origin: bool) -> px.scatter_3d:
+
+
+    if dimensions == 4:
+        color_cordinate = "dim4"
+
+
+    if dimensions == 3: color_cordinate = "source"
+
+    fig_pacmap = px.scatter_3d(
+        data_frame,
+        x=x_cordinate,
+        y=y_cordinate,
+        z=z_cordinate,
+        color = color_cordinate,
+        color_continuous_scale=color_scale,
+        symbol = 'source',
+        hover_data=['source'],
+        title=f'3D Scatter Plot - Reducer: {reducer} | Embedding Model: {embedding_model_name}',
+        height=800,
+        width=1200
+    )
+
+
+    if dimensions >= 4:
+        fig_pacmap.update_layout(
+            legend=dict(x=0.01, y=0.99, xanchor="left", yanchor="top"),
+            coloraxis_colorbar=dict(x=1.08, y=0.5, len=0.8),
+            margin=dict(r=80)
+        )
+        fig_pacmap.update_traces(
+            marker=dict(
+                colorbar=dict(
+                    x=1.15,
+                    y=0.5,
+                    len=0.75,
+                    thickness=18
+                )
+            )
+        )
+    if show_origin:
+        fig_pacmap.add_trace(go.Scatter3d(
+            x=[0],
+            y=[0],
+            z=[0],
+            mode='markers',
+            name='Origin',
+            marker=dict(
+                size=10,
+                color=[0] if dimensions >= 4 else 'white',
+                coloraxis="coloraxis" if dimensions >= 4 else None,
+                symbol='diamond',
+                showscale=False,
+            ),
+            hovertemplate="Origin (Zero Variance)<extra></extra>"
+        ))       
 
     return fig_pacmap
 
@@ -304,6 +359,8 @@ def cone_plot(data_frame: pd.DataFrame, color_scale: str, sizem_mode: str, size_
     )
 
     return fig
+
+
 
 def grand_tour_scatter_plot(data_frame: pd.DataFrame, embedding_model_name: str, frame_duration: int, transition_duration: int, easing: str, point_size: int) -> px.scatter:
 

@@ -21,7 +21,7 @@ The result: a spatial, mathematical audit of how documents relate to one another
 <img src="assets/3D_screenshot_GraphIt.png" width="800"/>
 
 ### Vector Field (Local Semantic Transitions)
-<img src="assets/6D_screenshot" width="800"/>
+<img src="assets/6D_screenshot.png" width="800"/>
 
 
 ### 🔵 Manifold Dimensionality Reduction

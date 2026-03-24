@@ -10,12 +10,10 @@ GraphIt is a Streamlit-based analytical laboratory for visualizing and comparing
 
 The result: a spatial, mathematical audit of how documents relate to one another — not just as keyword matches, but as geometric neighbors in semantic space.
 
----
-## Live Demo
-
+### Live Demo
 Try it out here: https://graphit3d.streamlit.app/
 
-
+---
 ## Examples
 
 ### Semantic Trajectory (Line Plot)

@@ -1,4 +1,3 @@
-# python -m streamlit run semantic_similarity_lab.py
 import plotly.express as px
 import numpy as np
 import utils as ut

@@ -68,6 +68,7 @@ Before any dimensional collapse occurs, GraphIt processes the raw high-dimension
 For each pair of sources, every sentence in Source A is compared against every sentence in Source B. The nearest-neighbor sentence from Source B is returned alongside its similarity score. Results are presented as a sortable DataFrame and a bar chart — with full hover detail including both matched sentences and their respective sources. All pairwise source combinations are computed automatically.
 
 **Grand Tour Projection**
+
 A 2D animated scatter plot that cycles through adjacent dimension pairs of the original embedding space (dim0→dim1, dim1→dim2, ...). This reveals the raw structural geometry of the data before reduction distorts global relationships. Fully configurable animation:
 
 | Control | Description |
@@ -76,6 +77,8 @@ A 2D animated scatter plot that cycles through adjacent dimension pairs of the o
 | Frame Duration | Milliseconds per animation frame |
 | Transition Duration | Milliseconds for interpolation between frames |
 | Easing Function | `cubic-in-out`, `elastic-in-out`, `bounce-in-out`, and 6 more |
+
+*Note: “Grand Tour” is a known technique for exploring high-dimensional data through continuous projections.*
 
 ---
 
